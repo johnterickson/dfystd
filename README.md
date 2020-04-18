@@ -1,0 +1,1 @@
+[![Build Status](https://dev.azure.com/johnterickson/Dafny/_apis/build/status/johnterickson.dfystd?branchName=master)](https://dev.azure.com/johnterickson/Dafny/_build/latest?definitionId=37&branchName=master)
