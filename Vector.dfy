@@ -133,6 +133,7 @@ class Vector<T>
         requires idx as int + count  as int <= this.Length() as int
         modifies this.cells
         ensures Valid()
+        ensures old(this.cells) == this.cells
         ensures old(this.sequence()[..idx+1]) == this.sequence()[..idx+1]
         ensures old(this.sequence()[idx..idx as ArrayLength+count-1]) == this.sequence()[idx+1..idx as ArrayLength+count]
         ensures old(this.sequence()[idx as ArrayLength+count..]) == this.sequence()[idx as ArrayLength+count..]
@@ -158,6 +159,7 @@ class Vector<T>
         requires 0 <= idx as ArrayLength < this.Length()
         modifies this, this.cells
         ensures Valid()
+        ensures (old(this.cells) != this.cells) ==> fresh(this.cells)
         ensures old(|this.sequence()|) + 1 == |this.sequence()|
         ensures old(this.sequence()[..idx]) == this.sequence()[..idx]
         ensures value == this.sequence()[idx]
@@ -172,15 +174,18 @@ class Vector<T>
         ghost var orig_seq := this.sequence();
 
         this.length := this.length + 1;
+        assert orig_seq[..] == this.sequence()[..|orig_seq|];
 
         var count := this.length - idx as ArrayLength;
-        assert orig_seq[..idx] == this.sequence()[..idx];
         bubble_up(idx, count);
+        assert orig_seq[..idx] == this.sequence()[..idx];
+        this.cells[idx] := value;
+        
         assert |this.sequence()| == this.length as int;
         assert this.sequence()[idx+1..] == this.sequence()[idx+1..this.length];
+        assert |orig_seq[idx..this.length-1]| == |this.sequence()[idx+1..this.length]|;
         assert orig_seq[idx..this.length-1] == this.sequence()[idx+1..this.length];
         assert orig_seq[idx..this.length-1] == this.sequence()[idx+1..];
-        this.cells[idx] := value;
     }
 
     method push(value: T)
@@ -222,24 +227,32 @@ class Vector<T>
     }
 }
 
-// method vector_test()
-// {
-//     var v := new Vector<int>();
+method VectorTests()
+{
+    var v := new Vector<int>();
+    assert [] == v.sequence();
 
-//     assert [] == v.sequence();
+    v.push(0);
+    assert [0] == v.sequence();
 
-//     v.push(0);
-//     assert [0] == v.sequence();
+    v.push(2);
+    assert [0, 2] == v.sequence();
 
-//     v.push(1);
-//     assert [0, 1] == v.sequence();
+    v.insert_at(1, 1);
+    assert [0, 1, 2] == v.sequence();
 
-//     var i := v.try_pop();
-//     assert Some(1) == i;
+    var i := v.try_pop();
+    assert Some(2) == i;
+    assert [0, 1] == v.sequence();
 
-//     i := v.try_pop();
-//     assert Some(0) == i;
+    i := v.try_pop();
+    assert Some(1) == i;
+    assert [0] == v.sequence();
 
-//     i := v.try_pop();
-//     assert None == i;
-// }
+    i := v.try_pop();
+    assert Some(0) == i;
+
+    i := v.try_pop();
+    assert None == i;
+    assert [] == v.sequence();
+}

@@ -90,6 +90,7 @@ class List<T>
 
     constructor()
         ensures Valid()
+        ensures this.sequence() == []
     {
         this.first := null;
         this.last := null;
@@ -102,8 +103,11 @@ class List<T>
         this.last := this.first;
     }
 
-    function Sequence() : seq<T>
+    function sequence() : (s: seq<T>)
         reads this, this.first
+        ensures if this.first == null 
+            then s == [] 
+            else s == this.first.Contents
     {
         if this.first == null then [] else this.first.Contents
     }
@@ -112,7 +116,7 @@ class List<T>
         requires Valid()
         modifies this
         ensures Valid()
-        ensures [v] + old(this.Sequence()) == this.Sequence()
+        ensures [v] + old(this.sequence()) == this.sequence()
     {
         var n : ListEntry<T>;
         if (this.first == null) {
@@ -146,4 +150,6 @@ method ListTest()
     l.prepend(3);
     l.prepend(2);
     l.prepend(1);
+
+    assert l.sequence() == [1,2,3];
 }
